@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0807">
+<title>Author Control — POUREDMILK</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.control-wrap{max-width:980px;margin:0 auto;padding:64px 24px 90px}
+.control-head{margin-bottom:34px}
+.control-head h1{font-size:clamp(2rem,5vw,4rem);margin:.2em 0}
+.control-head p{color:var(--muted);max-width:720px}
+.control-grid{display:grid;grid-template-columns:360px 1fr;gap:34px;align-items:start}
+.control-card{background:var(--surface);border:1px solid rgba(208,162,126,.18);border-radius:28px;padding:24px}
+.author-preview{width:240px;height:240px;border-radius:50%;overflow:hidden;margin:0 auto 20px;background:#100c0a;border:0}
+.author-preview img{width:100%;height:100%;display:block;object-fit:cover;object-position:center 30%}
+.control-label{display:block;font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent2);margin-bottom:8px}
+.control-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.control-btn{border:0;border-radius:18px;padding:12px 16px;background:var(--surface2);color:var(--cream);cursor:pointer;font:inherit}
+.control-btn.primary{background:var(--accent);color:#120b08}
+.control-btn:hover{filter:brightness(1.08)}
+.control-btn:focus{outline:2px solid var(--accent2);outline-offset:2px}
+.field{margin:18px 0}
+input[type=file]{width:100%;padding:12px;border-radius:18px;border:1px solid rgba(208,162,126,.3);background:#100c0a;color:var(--cream)}
+input[type=range]{width:100%}
+.range-row{display:flex;justify-content:space-between;gap:16px;align-items:center;color:var(--muted);font-size:.9rem}
+.status{margin-top:16px;color:var(--muted);font-size:.9rem}
+.note{border-left:3px solid var(--accent);padding:14px 16px;background:rgba(185,119,80,.08);border-radius:18px;color:var(--muted);margin-top:22px}
+@media(max-width:800px){.control-grid{grid-template-columns:1fr}.author-preview{width:210px;height:210px}}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="index.html" aria-label="POUREDMILK home">
+      <span class="brand-mark"><img src="assets/pouredmilk-logo.jpg" alt=""></span>
+      <span class="brand-name">POUREDMILK</span>
+    </a>
+    <nav class="nav"><a href="about.html">About</a><a href="index.html">Home</a></nav>
+  </div>
+</header>
+<main id="main" class="control-wrap">
+  <div class="control-head">
+    <p class="eyebrow">OWNER CONTROLS</p>
+    <h1>Author photo <em>control.</em></h1>
+    <p>Change the portrait used across the POUREDMILK author pages. Preview it as a circle, adjust the crop, then save.</p>
+  </div>
+  <div class="control-grid">
+    <section class="control-card">
+      <span class="control-label">Live preview</span>
+      <div class="author-preview"><img id="previewPhoto" src="assets/author-kalule.jpg" alt="Author portrait preview"></div>
+      <div class="control-actions">
+        <button class="control-btn primary" id="saveBtn" type="button">Save to this browser</button>
+        <button class="control-btn" id="resetBtn" type="button">Reset</button>
+      </div>
+      <p class="status" id="status">Using the current POUREDMILK portrait.</p>
+    </section>
+    <section class="control-card">
+      <span class="control-label">Change portrait</span>
+      <div class="field">
+        <label for="photoFile">Choose a new photo</label>
+        <input id="photoFile" type="file" accept="image/*">
+      </div>
+      <div class="field">
+        <div class="range-row"><label for="zoom">Zoom</label><output id="zoomOut">1.00×</output></div>
+        <input id="zoom" type="range" min="1" max="2.5" step=".01" value="1">
+      </div>
+      <div class="field">
+        <div class="range-row"><label for="positionY">Vertical position</label><output id="positionOut">50%</output></div>
+        <input id="positionY" type="range" min="0" max="100" step="1" value="50">
+      </div>
+      <div class="note"><strong>Important:</strong> this first control version saves the chosen portrait and crop in this browser. It does not yet provide a secure server login or change the files on your web host.</div>
+    </section>
+  </div>
+</main>
+<script>
+(function(){
+  const KEY='pouredmilk-author-photo';
+  const POS='pouredmilk-author-photo-position';
+  const ZOOM='pouredmilk-author-photo-zoom';
+  const preview=document.getElementById('previewPhoto');
+  const file=document.getElementById('photoFile');
+  const zoom=document.getElementById('zoom');
+  const pos=document.getElementById('positionY');
+  const zoomOut=document.getElementById('zoomOut');
+  const posOut=document.getElementById('positionOut');
+  const status=document.getElementById('status');
+  const saved=localStorage.getItem(KEY);
+  if(saved) preview.src=saved;
+  zoom.value=localStorage.getItem(ZOOM)||'1';
+  pos.value=localStorage.getItem(POS)||'50';
+  function render(){
+    const z=parseFloat(zoom.value), p=parseInt(pos.value,10);
+    preview.style.objectPosition='center '+p+'%';
+    preview.style.transform='scale('+z+')';
+    zoomOut.value=z.toFixed(2)+'×';
+    posOut.value=p+'%';
+  }
+  file.addEventListener('change',function(){
+    const f=file.files&&file.files[0]; if(!f)return;
+    const reader=new FileReader();
+    reader.onload=e=>{preview.src=e.target.result;status.textContent='New portrait loaded. Review the crop, then save.';};
+    reader.readAsDataURL(f);
+  });
+  zoom.addEventListener('input',render);
+  pos.addEventListener('input',render);
+  document.getElementById('saveBtn').addEventListener('click',function(){
+    try{
+      localStorage.setItem(KEY,preview.src);
+      localStorage.setItem(ZOOM,zoom.value);
+      localStorage.setItem(POS,pos.value);
+      status.textContent='Saved. The author portrait on this browser will now use this version.';
+    }catch(e){status.textContent='The browser could not save this image. Try a smaller photo.';}
+  });
+  document.getElementById('resetBtn').addEventListener('click',function(){
+    localStorage.removeItem(KEY); localStorage.removeItem(ZOOM); localStorage.removeItem(POS);
+    preview.src='assets/author-kalule.jpg'; zoom.value='1'; pos.value='50'; render();
+    status.textContent='Reset to the portrait bundled with POUREDMILK.';
+  });
+  render();
+})();
+</script>
+</body>
+</html>
